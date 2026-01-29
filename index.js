@@ -111,3 +111,14 @@ app.post("/validar", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
+app.get("/liberacoes/:codigo", (req, res) => {
+  const { codigo } = req.params;
+
+  const liberacao = liberacoes.find(l => l.codigo === codigo);
+
+  if (!liberacao) {
+    return res.status(404).json({ erro: "Código não encontrado" });
+  }
+
+  res.json(liberacao);
+});
