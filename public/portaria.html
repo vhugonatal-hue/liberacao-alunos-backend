@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Portaria - Validação</title>
+</head>
+<body>
+  <h2>Validar Código</h2>
+
+  <input placeholder="Digite o código" id="codigo">
+  <button onclick="validar()">Validar</button>
+
+  <h3 id="resultado"></h3>
+
+  <script>
+    const API = "COLE_AQUI_SUA_URL_RENDER";
+
+    async function validar() {
+      const codigo = document.getElementById("codigo").value;
+
+      const resposta = await fetch(API + "/validar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codigo })
+      });
+
+      const json = await resposta.json();
+
+      if (json.sucesso) {
+        resultado.innerText =
+          "Liberado: " + json.aluno +
+          " | Turma: " + json.turma +
+          " | Retirado por: " + json.terceiro;
+      } else {
+        resultado.innerText = "Código inválido ou já utilizado";
+      }
+    }
+  </script>
+</body>
+</html>
