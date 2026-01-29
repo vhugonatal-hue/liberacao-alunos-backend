@@ -2,50 +2,41 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Portaria - Validação de Liberação</title>
+  <title>Portaria - Validação</title>
 </head>
 <body>
-  <h2>Validação de Liberação - Portaria</h2>
 
-  <input placeholder="Digite o código" id="codigo">
-  <button onclick="validarCodigo()">Validar</button>
+<h2>Validação de Liberação</h2>
 
-  <h3 id="resultado"></h3>
+<input placeholder="Digite o código" id="codigo">
+<button onclick="validar()">Validar</button>
 
-  <script>
-    const API = "https://liberacao-alunos-backend.onrender.com";
+<h3 id="resultado"></h3>
 
-    async function validarCodigo() {
-      const codigo = document.getElementById("codigo").value.toUpperCase();
+<script>
+const API = "https://liberacao-alunos-backend.onrender.com";
 
-      if (!codigo) {
-        alert("Digite um código");
-        return;
-      }
+async function validar() {
+  const codigo = document.getElementById("codigo").value;
 
-      try {
-        const resposta = await fetch(API + "/liberacoes/" + codigo);
+  const resposta = await fetch(API + "/liberacoes/" + codigo);
 
-        if (!resposta.ok) {
-          document.getElementById("resultado").innerText =
-            "❌ Código não encontrado";
-          return;
-        }
+  if (!resposta.ok) {
+    document.getElementById("resultado").innerText =
+      "❌ Código não encontrado";
+    return;
+  }
 
-        const dados = await resposta.json();
+  const dados = await resposta.json();
 
-        document.getElementById("resultado").innerText =
-          `✅ Liberação autorizada
+  document.getElementById("resultado").innerText =
+    `✅ Liberação autorizada
 Aluno: ${dados.aluno}
 Turma: ${dados.turma}
 Responsável: ${dados.responsavel}
-Autorizado a retirar: ${dados.terceiro}`;
+Autorizado: ${dados.terceiro}`;
+}
+</script>
 
-      } catch (erro) {
-        document.getElementById("resultado").innerText =
-          "Erro ao conectar com o servidor";
-      }
-    }
-  </script>
 </body>
 </html>
