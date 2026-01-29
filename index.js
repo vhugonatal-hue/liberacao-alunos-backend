@@ -8,12 +8,12 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Banco em memória (simples)
+// Banco em memória
 let liberacoes = [];
 
-// Rota inicial (teste)
+// Rota inicial
 app.get("/", (req, res) => {
-  res.send("API de Liberação de Alunos está funcionando!");
+  res.send("API ONLINE 🚀");
 });
 
 // =============================
@@ -60,7 +60,31 @@ app.post("/liberacoes", (req, res) => {
 });
 
 // =============================
-// VALIDAR LIBERAÇÃO (PORTARIA)
+// BUSCAR LIBERAÇÃO (PORTARIA)
+// =============================
+app.get("/liberacoes/:codigo", (req, res) => {
+  const { codigo } = req.params;
+
+  const liberacao = liberacoes.find(l => l.codigo === codigo);
+
+  if (!liberacao) {
+    return res.status(404).json({
+      sucesso: false,
+      mensagem: "Código não encontrado"
+    });
+  }
+
+  res.json({
+    sucesso: true,
+    aluno: liberacao.aluno,
+    turma: liberacao.turma,
+    terceiro: liberacao.terceiro,
+    responsavel: liberacao.responsavel
+  });
+});
+
+// =============================
+// VALIDAR LIBERAÇÃO (OPCIONAL)
 // =============================
 app.post("/validar", (req, res) => {
   const { codigo } = req.body;
