@@ -11,7 +11,9 @@ app.use(express.json());
 // Banco em memória
 let liberacoes = [];
 
-// Rota inicial
+// =============================
+// ROTA INICIAL
+// =============================
 app.get("/", (req, res) => {
   res.send("API ONLINE 🚀");
 });
@@ -31,7 +33,9 @@ app.post("/liberacoes", (req, res) => {
   } = req.body;
 
   if (!aluno || !turma) {
-    return res.status(400).json({ erro: "Aluno e turma são obrigatórios" });
+    return res.status(400).json({
+      erro: "Aluno e turma são obrigatórios"
+    });
   }
 
   const codigo = Math.random()
@@ -60,65 +64,27 @@ app.post("/liberacoes", (req, res) => {
 });
 
 // =============================
-// BUSCAR LIBERAÇÃO (PORTARIA)
+// CONSULTAR LIBERAÇÃO (PORTARIA)
 // =============================
 app.get("/liberacoes/:codigo", (req, res) => {
   const { codigo } = req.params;
 
-  const liberacao = liberacoes.find(l => l.codigo === codigo);
+  const liberacao = liberacoes.find(
+    l => l.codigo.toUpperCase() === codigo.toUpperCase()
+  );
 
   if (!liberacao) {
     return res.status(404).json({
-      sucesso: false,
-      mensagem: "Código não encontrado"
+      erro: "Código não encontrado"
     });
-  }
-
-  res.json({
-    sucesso: true,
-    aluno: liberacao.aluno,
-    turma: liberacao.turma,
-    terceiro: liberacao.terceiro,
-    responsavel: liberacao.responsavel
-  });
-});
-
-// =============================
-// VALIDAR LIBERAÇÃO (OPCIONAL)
-// =============================
-app.post("/validar", (req, res) => {
-  const { codigo } = req.body;
-
-  const liberacao = liberacoes.find(l => l.codigo === codigo);
-
-  if (!liberacao) {
-    return res.status(404).json({
-      sucesso: false,
-      mensagem: "Código não encontrado"
-    });
-  }
-
-  res.json({
-    sucesso: true,
-    aluno: liberacao.aluno,
-    turma: liberacao.turma,
-    terceiro: liberacao.terceiro,
-    responsavel: liberacao.responsavel
-  });
-});
-
-// Iniciar servidor
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-});
-app.get("/liberacoes/:codigo", (req, res) => {
-  const { codigo } = req.params;
-
-  const liberacao = liberacoes.find(l => l.codigo === codigo);
-
-  if (!liberacao) {
-    return res.status(404).json({ erro: "Código não encontrado" });
   }
 
   res.json(liberacao);
+});
+
+// =============================
+// INICIAR SERVIDOR
+// =============================
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
