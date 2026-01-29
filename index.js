@@ -8,18 +8,19 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Servir arquivos HTML
+app.use(express.static("public"));
+
 // Banco em memória
 let liberacoes = [];
 
-// =============================
-// ROTA INICIAL
-// =============================
+// Rota inicial
 app.get("/", (req, res) => {
   res.send("API ONLINE 🚀");
 });
 
 // =============================
-// CRIAR LIBERAÇÃO (SECRETARIA)
+// CRIAR LIBERAÇÃO
 // =============================
 app.post("/liberacoes", (req, res) => {
   const {
@@ -64,7 +65,7 @@ app.post("/liberacoes", (req, res) => {
 });
 
 // =============================
-// CONSULTAR LIBERAÇÃO (PORTARIA)
+// CONSULTAR LIBERAÇÃO
 // =============================
 app.get("/liberacoes/:codigo", (req, res) => {
   const { codigo } = req.params;
@@ -82,9 +83,7 @@ app.get("/liberacoes/:codigo", (req, res) => {
   res.json(liberacao);
 });
 
-// =============================
-// INICIAR SERVIDOR
-// =============================
+// Iniciar servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
