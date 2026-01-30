@@ -17,7 +17,7 @@
 const API = "https://liberacao-alunos-backend.onrender.com";
 
 async function validar() {
-  const codigo = document.getElementById("codigo").value;
+  const codigo = document.getElementById("codigo").value.toUpperCase();
 
   const resposta = await fetch(API + "/liberacoes/" + codigo);
 
@@ -30,7 +30,7 @@ async function validar() {
   const dados = await resposta.json();
 
   document.getElementById("resultado").innerText =
-    `✅ Liberação autorizada
+`✅ Liberação Autorizada
 Aluno: ${dados.aluno}
 Turma: ${dados.turma}
 Responsável: ${dados.responsavel}
