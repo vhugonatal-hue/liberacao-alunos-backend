@@ -12,14 +12,16 @@ app.use(express.json());
 // Banco em memória
 let liberacoes = [];
 
-// Rota teste
+// ======================
+// ROTA TESTE
+// ======================
 app.get("/", (req, res) => {
   res.send("API ONLINE 🚀");
 });
 
-// =============================
-// CRIAR LIBERAÇÃO (SECRETARIA)
-// =============================
+// ======================
+// CRIAR LIBERAÇÃO
+// ======================
 app.post("/liberacoes", async (req, res) => {
   const {
     aluno,
@@ -31,12 +33,14 @@ app.post("/liberacoes", async (req, res) => {
     observacoes
   } = req.body;
 
+  if (!aluno || !turma) {
+    return res.status(400).json({ erro: "Aluno e turma obrigatórios" });
+  }
+
   const codigo = Math.random()
     .toString(36)
     .substring(2, 8)
     .toUpperCase();
-
-  const qrCode = await QRCode.toDataURL(codigo);
 
   const liberacao = {
     codigo,
@@ -47,21 +51,23 @@ app.post("/liberacoes", async (req, res) => {
     terceiro,
     documento,
     observacoes,
-    qrCode
+    data: new Date()
   };
 
   liberacoes.push(liberacao);
 
-  // ⚠️ AQUI está o ponto-chave
+  // GERAR QR CODE
+  const qrCode = await QRCode.toDataURL(codigo);
+
   res.json({
     codigo,
     qrCode
   });
 });
 
-// =============================
-// BUSCAR LIBERAÇÃO (PORTARIA)
-// =============================
+// ======================
+// BUSCAR LIBERAÇÃO
+// ======================
 app.get("/liberacoes/:codigo", (req, res) => {
   const liberacao = liberacoes.find(
     l => l.codigo === req.params.codigo
@@ -74,47 +80,47 @@ app.get("/liberacoes/:codigo", (req, res) => {
   res.json(liberacao);
 });
 
-// =============================
+// ======================
 // GERAR PDF
-// =============================
+// ======================
 app.get("/pdf/:codigo", (req, res) => {
   const liberacao = liberacoes.find(
     l => l.codigo === req.params.codigo
   );
 
   if (!liberacao) {
-    return res.status(404).send("Liberação não encontrada");
+    return res.status(404).send("Código não encontrado");
   }
 
+  const doc = new PDFDocument();
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
     `inline; filename=liberacao-${liberacao.codigo}.pdf`
   );
 
-  const doc = new PDFDocument();
   doc.pipe(res);
 
   doc.fontSize(18).text("LIBERAÇÃO DE ALUNO", { align: "center" });
   doc.moveDown();
 
-  doc.fontSize(12).text(`Aluno: ${liberacao.aluno}`);
+  doc.fontSize(12);
+  doc.text(`Código: ${liberacao.codigo}`);
+  doc.text(`Aluno: ${liberacao.aluno}`);
   doc.text(`Turma: ${liberacao.turma}`);
   doc.text(`Responsável: ${liberacao.responsavel}`);
   doc.text(`Telefone: ${liberacao.telefone}`);
   doc.text(`Autorizado: ${liberacao.terceiro}`);
   doc.text(`Documento: ${liberacao.documento}`);
   doc.moveDown();
-  doc.text(`Código: ${liberacao.codigo}`);
-
-  doc.image(
-    Buffer.from(liberacao.qrCode.split(",")[1], "base64"),
-    { width: 120 }
-  );
+  doc.text(`Observações: ${liberacao.observacoes || "-"}`);
+  doc.moveDown();
+  doc.text(`Data: ${new Date(liberacao.data).toLocaleString()}`);
 
   doc.end();
 });
 
+// ======================
 app.listen(PORT, () => {
-  console.log("Servidor rodando na porta", PORT);
+  console.log("Servidor rodando na porta " + PORT);
 });
