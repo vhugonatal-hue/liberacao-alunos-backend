@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const QRCode = require("qrcode");
 const PDFDocument = require("pdfkit");
+const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,7 +10,12 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Banco em memória
+// 🔴 ESSENCIAL — SERVIR HTML
+app.use(express.static(path.join(__dirname, "public")));
+
+// ======================
+// BANCO EM MEMÓRIA
+// ======================
 let liberacoes = [];
 
 // ======================
@@ -66,7 +72,7 @@ app.post("/liberacoes", async (req, res) => {
 });
 
 // ======================
-// BUSCAR LIBERAÇÃO
+// BUSCAR LIBERAÇÃO (PORTARIA)
 // ======================
 app.get("/liberacoes/:codigo", (req, res) => {
   const liberacao = liberacoes.find(
@@ -83,7 +89,7 @@ app.get("/liberacoes/:codigo", (req, res) => {
 // ======================
 // GERAR PDF
 // ======================
-app.get("/pdf/:codigo", (req, res) => {
+app.get("/pdf/:codigo", async (req, res) => {
   const liberacao = liberacoes.find(
     l => l.codigo === req.params.codigo
   );
@@ -93,6 +99,7 @@ app.get("/pdf/:codigo", (req, res) => {
   }
 
   const doc = new PDFDocument();
+
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
