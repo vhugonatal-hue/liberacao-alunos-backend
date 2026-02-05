@@ -7,10 +7,13 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ======================
+// MIDDLEWARES
+// ======================
 app.use(cors());
 app.use(express.json());
 
-// 🔴 ESSENCIAL — SERVIR HTML
+// SERVIR ARQUIVOS HTML (secretaria.html / portaria.html)
 app.use(express.static(path.join(__dirname, "public")));
 
 // ======================
@@ -19,10 +22,10 @@ app.use(express.static(path.join(__dirname, "public")));
 let liberacoes = [];
 
 // ======================
-// ROTA TESTE
+// ROTA RAIZ (TESTE)
 // ======================
 app.get("/", (req, res) => {
-  res.send("API ONLINE 🚀");
+  res.send("API DE LIBERAÇÃO ONLINE 🚀");
 });
 
 // ======================
@@ -39,8 +42,10 @@ app.post("/liberacoes", async (req, res) => {
     observacoes
   } = req.body;
 
-  if (!aluno || !turma) {
-    return res.status(400).json({ erro: "Aluno e turma obrigatórios" });
+  if (!aluno || !turma || !responsavel) {
+    return res.status(400).json({
+      erro: "Campos obrigatórios não preenchidos"
+    });
   }
 
   const codigo = Math.random()
@@ -62,7 +67,7 @@ app.post("/liberacoes", async (req, res) => {
 
   liberacoes.push(liberacao);
 
-  // GERAR QR CODE
+  // GERAR QR CODE (aponta para validação na portaria)
   const qrCode = await QRCode.toDataURL(codigo);
 
   res.json({
@@ -80,16 +85,18 @@ app.get("/liberacoes/:codigo", (req, res) => {
   );
 
   if (!liberacao) {
-    return res.status(404).json({ erro: "Código não encontrado" });
+    return res.status(404).json({
+      erro: "Código não encontrado"
+    });
   }
 
   res.json(liberacao);
 });
 
 // ======================
-// GERAR PDF
+// GERAR PDF PROFISSIONAL
 // ======================
-app.get("/pdf/:codigo", async (req, res) => {
+app.get("/pdf/:codigo", (req, res) => {
   const liberacao = liberacoes.find(
     l => l.codigo === req.params.codigo
   );
@@ -98,7 +105,7 @@ app.get("/pdf/:codigo", async (req, res) => {
     return res.status(404).send("Código não encontrado");
   }
 
-  const doc = new PDFDocument();
+  const doc = new PDFDocument({ margin: 50 });
 
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
@@ -108,25 +115,48 @@ app.get("/pdf/:codigo", async (req, res) => {
 
   doc.pipe(res);
 
-  doc.fontSize(18).text("LIBERAÇÃO DE ALUNO", { align: "center" });
-  doc.moveDown();
+  // CABEÇALHO
+  doc
+    .fontSize(20)
+    .fillColor("#1f3c88")
+    .text("ESCOLA CEUS", { align: "center" });
 
+  doc
+    .moveDown(0.5)
+    .fontSize(14)
+    .fillColor("black")
+    .text("LIBERAÇÃO DE ALUNO", { align: "center" });
+
+  doc.moveDown(2);
+
+  // DADOS
   doc.fontSize(12);
   doc.text(`Código: ${liberacao.codigo}`);
   doc.text(`Aluno: ${liberacao.aluno}`);
   doc.text(`Turma: ${liberacao.turma}`);
   doc.text(`Responsável: ${liberacao.responsavel}`);
   doc.text(`Telefone: ${liberacao.telefone}`);
-  doc.text(`Autorizado: ${liberacao.terceiro}`);
+  doc.text(`Pessoa autorizada: ${liberacao.terceiro}`);
   doc.text(`Documento: ${liberacao.documento}`);
   doc.moveDown();
   doc.text(`Observações: ${liberacao.observacoes || "-"}`);
-  doc.moveDown();
-  doc.text(`Data: ${new Date(liberacao.data).toLocaleString()}`);
+
+  doc.moveDown(2);
+
+  // RODAPÉ
+  doc
+    .fontSize(10)
+    .fillColor("gray")
+    .text(
+      `Emitido em ${new Date(liberacao.data).toLocaleString()}`,
+      { align: "right" }
+    );
 
   doc.end();
 });
 
+// ======================
+// START SERVIDOR
 // ======================
 app.listen(PORT, () => {
   console.log("Servidor rodando na porta " + PORT);
