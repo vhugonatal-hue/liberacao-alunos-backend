@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// SERVIR ARQUIVOS HTML (secretaria.html / portaria.html)
+// HTML e arquivos públicos
 app.use(express.static(path.join(__dirname, "public")));
 
 // ======================
@@ -22,7 +22,7 @@ app.use(express.static(path.join(__dirname, "public")));
 let liberacoes = [];
 
 // ======================
-// ROTA RAIZ (TESTE)
+// ROTA TESTE
 // ======================
 app.get("/", (req, res) => {
   res.send("API DE LIBERAÇÃO ONLINE 🚀");
@@ -67,7 +67,7 @@ app.post("/liberacoes", async (req, res) => {
 
   liberacoes.push(liberacao);
 
-  // GERAR QR CODE (aponta para validação na portaria)
+  // QR Code com o código
   const qrCode = await QRCode.toDataURL(codigo);
 
   res.json({
@@ -94,9 +94,9 @@ app.get("/liberacoes/:codigo", (req, res) => {
 });
 
 // ======================
-// GERAR PDF PROFISSIONAL
+// PDF PROFISSIONAL
 // ======================
-app.get("/pdf/:codigo", (req, res) => {
+app.get("/pdf/:codigo", async (req, res) => {
   const liberacao = liberacoes.find(
     l => l.codigo === req.params.codigo
   );
@@ -115,11 +115,21 @@ app.get("/pdf/:codigo", (req, res) => {
 
   doc.pipe(res);
 
+  // ======================
+  // LOGO
+  // ======================
+  const logoPath = path.join(__dirname, "public", "logo.png");
+  if (logoPath) {
+    doc.image(logoPath, 50, 40, { width: 80 });
+  }
+
+  // ======================
   // CABEÇALHO
+  // ======================
   doc
-    .fontSize(20)
+    .fontSize(18)
     .fillColor("#1f3c88")
-    .text("ESCOLA CEUS", { align: "center" });
+    .text("ESCOLA CEUS", 0, 50, { align: "center" });
 
   doc
     .moveDown(0.5)
@@ -129,34 +139,69 @@ app.get("/pdf/:codigo", (req, res) => {
 
   doc.moveDown(2);
 
+  // ======================
+  // CÓDIGO EM DESTAQUE
+  // ======================
+  doc
+    .rect(150, doc.y, 300, 35)
+    .stroke("#1f3c88");
+
+  doc
+    .fontSize(14)
+    .fillColor("#1f3c88")
+    .text(`CÓDIGO: ${liberacao.codigo}`, 150, doc.y + 10, {
+      align: "center",
+      width: 300
+    });
+
+  doc.moveDown(3);
+
+  // ======================
   // DADOS
-  doc.fontSize(12);
-  doc.text(`Código: ${liberacao.codigo}`);
+  // ======================
+  doc.fontSize(12).fillColor("black");
+
   doc.text(`Aluno: ${liberacao.aluno}`);
   doc.text(`Turma: ${liberacao.turma}`);
   doc.text(`Responsável: ${liberacao.responsavel}`);
   doc.text(`Telefone: ${liberacao.telefone}`);
   doc.text(`Pessoa autorizada: ${liberacao.terceiro}`);
   doc.text(`Documento: ${liberacao.documento}`);
+
   doc.moveDown();
   doc.text(`Observações: ${liberacao.observacoes || "-"}`);
 
   doc.moveDown(2);
 
+  // ======================
+  // QR CODE NO PDF
+  // ======================
+  const qrCode = await QRCode.toDataURL(liberacao.codigo);
+  doc.image(qrCode, 400, doc.y - 100, { width: 100 });
+
+  // ======================
+  // ASSINATURA
+  // ======================
+  doc.moveDown(4);
+  doc.text("________________________________________");
+  doc.text("Assinatura da Secretaria");
+
+  doc.moveDown(2);
+
+  // ======================
   // RODAPÉ
+  // ======================
   doc
-    .fontSize(10)
+    .fontSize(9)
     .fillColor("gray")
     .text(
-      `Emitido em ${new Date(liberacao.data).toLocaleString()}`,
-      { align: "right" }
+      `Emitido em ${new Date(liberacao.data).toLocaleString("pt-BR")}`,
+      { align: "center" }
     );
 
   doc.end();
 });
 
-// ======================
-// START SERVIDOR
 // ======================
 app.listen(PORT, () => {
   console.log("Servidor rodando na porta " + PORT);
